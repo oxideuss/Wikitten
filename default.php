@@ -4,56 +4,34 @@ define('APP_STARTED', true);
 
 // Conditionally load configuration from a config.php file in
 // the site root, if it exists.
-if (is_file($config_file = __DIR__ . DIRECTORY_SEPARATOR . 'config.php')) {
-    require_once $config_file;
+if (is_file($configFile = __DIR__ . DIRECTORY_SEPARATOR . 'config.php')) {
+    require_once $configFile;
 }
 
-if (!defined('APP_NAME')) {
-    define('APP_NAME', 'Wikitten');
-}
-
-if (!defined('LIBRARY')) {
-    define('LIBRARY', __DIR__ . DIRECTORY_SEPARATOR . 'library');
-}
-
-if (!defined('DEFAULT_FILE')) {
-    define('DEFAULT_FILE', 'index.md');
-}
-
-if (!defined('USE_WIKITTEN_LOGO')) {
-    define('USE_WIKITTEN_LOGO', true);
-}
-
-if (!defined('USE_DARK_THEME')) {
-    define('USE_DARK_THEME', false);
-}
-
-if (!defined('USE_PAGE_METADATA')) {
-    define('USE_PAGE_METADATA', true);
-}
-
-if (!defined('ENABLE_EDITING')) {
-    define('ENABLE_EDITING', false);
-}
-
-if (!defined('ENABLE_PASTEBIN')) {
-    define('ENABLE_PASTEBIN', false);
-}
-
-if (!defined('PASTEBIN_API_KEY')) {
-    define('PASTEBIN_API_KEY', false);
-}
-
-if (!defined('EXTERNAL_LINK_TARGET')) {
-    define('EXTERNAL_LINK_TARGET', '_blank');
-}
-
-if (!defined('INTERNAL_WIKI_LINK')) {
-    define('INTERNAL_WIKI_LINK', true);
-}
-
-if (!defined('CUSTOM_MARKDOWN_STYLESHEET')) {
-    define('CUSTOM_MARKDOWN_STYLESHEET', '');
+foreach ([
+    'APP_NAME' => 'Wikitten',
+    'LIBRARY' => __DIR__ . DIRECTORY_SEPARATOR . 'library',
+    'DEFAULT_FILE' => 'index.md',
+    'USE_WIKITTEN_LOGO' => true,
+    'USE_DARK_THEME' => false,
+    'USE_PAGE_METADATA' => true,
+    'ENABLE_EDITING' => false,
+    'ENABLE_PASTEBIN' => false,
+    'PASTEBIN_API_KEY' => false,
+    'EXTERNAL_LINK_TARGET' => '_blank',
+    'INTERNAL_WIKI_LINK' => true,
+    'CUSTOM_MARKDOWN_STYLESHEET' => '',
+] as $name => $value) {
+    if (!defined($name)) {
+        define($name, $value);
+    }
 }
 
 define('PLUGINS', __DIR__ . DIRECTORY_SEPARATOR . 'plugins');
+
+if (!function_exists('e')) {
+    function e(mixed $dirty): string
+    {
+        return htmlspecialchars(is_scalar($dirty) ? (string) $dirty : '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}

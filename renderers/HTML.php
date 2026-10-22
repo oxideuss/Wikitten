@@ -1,5 +1,6 @@
 <?php
 
-function HTML($source) {
+function HTML(string $source): string
+{
     return $source;
 }

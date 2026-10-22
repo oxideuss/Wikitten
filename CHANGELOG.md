@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-So far, nothing.
+- Upgrade the Docker runtime from PHP 7.3 to PHP 8.5.
+- Replace the PHP 7.3 configuration with a compact PHP 8.5 configuration and safer session defaults.
+- Modernize application PHP with typed properties, methods and class constants, current array and string syntax, and strict JSON decoding.
+- Harden page creation and editing paths, session authentication, and HTML output.
+- Update the Pastebin API endpoint and request handling for current PHP cURL handles.
+- Update the Compose configuration to current syntax.
+- Add web actions to create, rename and delete notes and folders when editing is enabled.
 
 ## [1.3.0] 2019-09-11
 

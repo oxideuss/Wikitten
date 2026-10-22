@@ -3,11 +3,6 @@ if (!defined('APP_STARTED')) {
     die('Forbidden!');
 }
 
-// Sanitize html content:
-function e($dirty)
-{
-    return htmlspecialchars($dirty, ENT_QUOTES, 'UTF-8');
-}
 ?>
 <!DOCTYPE html>
 <html>
@@ -20,7 +15,7 @@ function e($dirty)
             <title><?php echo e($page['title']) ?> - <?php echo e(APP_NAME) ?></title>
         <?php endif ?>
 
-        <base href="<?php echo BASE_URL; ?>/">
+        <base href="<?php echo e(BASE_URL); ?>/">
 
         <link rel="shortcut icon" href="static/img/favicon.ico">
 
@@ -33,7 +28,7 @@ function e($dirty)
             <link rel="stylesheet" href="static/css/bootstrap.min.css">
             <link rel="stylesheet" href="static/css/prettify.css">
             <?php if(!empty(CUSTOM_MARKDOWN_STYLESHEET) && (file_exists(__DIR__ . '/../static/css/custom-styles/'.CUSTOM_MARKDOWN_STYLESHEET))) : ?>
-                <link rel="stylesheet" href="static/css/custom-styles/<?php echo(CUSTOM_MARKDOWN_STYLESHEET) ?>">
+                <link rel="stylesheet" href="static/css/custom-styles/<?php echo e(CUSTOM_MARKDOWN_STYLESHEET) ?>">
             <?php endif; ?>
             <link rel="stylesheet" href="static/css/main.css">
         <?php endif; ?>
@@ -74,7 +69,7 @@ function e($dirty)
                             </div>
                         </div>
 
-                        <a href="<?php echo BASE_URL; ?>?action=logout" class="btn btn-default btn-xs">Logout</a>
+                        <a href="<?php echo e(BASE_URL); ?>?action=logout" class="btn btn-default btn-xs">Logout</a>
                     </div>
                     <div class="col-xs-12 col-md-9">
                         <div id="content">
@@ -89,7 +84,7 @@ function e($dirty)
     </div>
     <script>
         <?php if (USE_WIKITTEN_LOGO === true): ?>
-            $(document).ready(function () {
+            $(function () {
                 $('#logo').delay(2000).animate({
                     left: '20px'
                 }, 600);

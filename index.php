@@ -1,27 +1,25 @@
 <?php
 require_once __DIR__ . '/default.php';
 
-$request_uri = parse_url($_SERVER['REQUEST_URI']);
-$request_uri = explode("/", $request_uri['path']);
-$script_name = explode("/", dirname($_SERVER['SCRIPT_NAME']));
+$requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$requestUri = explode('/', $requestUri);
+$scriptName = explode('/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
 
-$app_dir = array();
-foreach ($request_uri as $key => $value) {
-    if (isset($script_name[$key]) && $script_name[$key] == $value) {
-        $app_dir[] = $script_name[$key];
+$appDir = [];
+foreach ($requestUri as $key => $value) {
+    if (isset($scriptName[$key]) && $scriptName[$key] === $value) {
+        $appDir[] = $scriptName[$key];
     }
 }
 
-define('APP_DIR', rtrim(implode('/', $app_dir), "/"));
+define('APP_DIR', rtrim(implode('/', $appDir), '/'));
 
-$https = false;
-if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") {
-    $https = true;
-}
+$scheme = ($_SERVER['HTTPS'] ?? '') === 'on' ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-define('BASE_URL', "http" . ($https ? "s" : "") . "://" . $_SERVER['HTTP_HOST'] . APP_DIR);
+define('BASE_URL', $scheme . '://' . $host . APP_DIR);
 
-unset($config_file, $request_uri, $script_name, $app_dir, $https);
+unset($config_file, $requestUri, $scriptName, $appDir, $scheme, $host);
 
 
 if (defined('ACCESS_USER') && defined('ACCESS_PASSWORD')) {

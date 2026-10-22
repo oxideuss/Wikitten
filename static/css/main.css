@@ -71,6 +71,36 @@ form {
 #submit-edits {
     margin: 10px;
 }
+.wiki-management {
+    margin: 0 0 20px;
+    padding: 10px 12px;
+    border: 1px solid #C1CFDC;
+    border-radius: 4px;
+    background: #F7F9FA;
+}
+.wiki-management summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+.wiki-management-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding-top: 12px;
+}
+.wiki-management-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.wiki-management-form label {
+    margin: 0;
+}
+.wiki-management-form .form-control {
+    width: 190px;
+}
 #sidebar {
     padding: 3px;
     background-color: #C1CFDC;
@@ -120,11 +150,40 @@ form {
 #sidebar li.directory {
     font-weight: bold;
 }
-#sidebar li.directory > a {
+#sidebar li.directory > .directory-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px;
+}
+#sidebar li.directory > .directory-row > a {
+    min-width: 0;
     color: #333;
 }
-#sidebar li.directory > a:hover {
+#sidebar li.directory > .directory-row > a:hover {
     text-decoration: none;
+}
+.directory-toggle {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #555;
+    cursor: pointer;
+}
+.directory-toggle:hover, .directory-toggle:focus {
+    color: #0068DE;
+    background: rgba(0, 0, 0, .06);
+}
+.directory-toggle i {
+    transition: transform .15s ease;
+}
+.directory.open > .directory-row .directory-toggle i {
+    transform: rotate(90deg);
 }
 #sidebar li.file {
     font-weight: normal;

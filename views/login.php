@@ -4,9 +4,9 @@ if (!defined('APP_STARTED')) {
 }
 
 // Sanitize html content:
-function e($dirty)
+function e(mixed $dirty): string
 {
-    return htmlspecialchars($dirty, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(is_scalar($dirty) ? (string) $dirty : '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 ?>
 <!DOCTYPE html>
@@ -20,7 +20,7 @@ function e($dirty)
             <title><?php echo e($page['title']) ?> - <?php echo e(APP_NAME) ?></title>
         <?php endif ?>
 
-        <base href="<?php echo BASE_URL; ?>/">
+        <base href="<?php echo e(BASE_URL); ?>/">
 
         <link rel="shortcut icon" href="static/img/favicon.ico">
 
@@ -69,7 +69,7 @@ function e($dirty)
 
                           <div class="inner">
                             <?php if (isset($error)): ?>
-                              <div class="alert alert-danger"><?php echo $error; ?></div>
+                              <div class="alert alert-danger"><?php echo htmlspecialchars((string) $error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?></div>
                             <?php endif; ?>
 
                             <form action="" method="post">

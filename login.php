@@ -15,9 +15,16 @@ class Login
      */
     public function __construct()
     {
-        session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_set_cookie_params([
+                'httponly' => true,
+                'secure' => ($_SERVER['HTTPS'] ?? '') === 'on',
+                'samesite' => 'Lax',
+            ]);
+            session_start();
+        }
 
-        if ($_GET['action'] === 'logout') {
+        if (($_GET['action'] ?? null) === 'logout') {
             $this->doLogout();
 
             header("location: " . BASE_URL);
@@ -29,13 +36,11 @@ class Login
      * Check if the user is logged
      * @return boolean
      */
-    private function isLogged()
+    private function isLogged(): bool
     {
-        if ($_SESSION['ACCESS_USER'] !== ACCESS_USER || $_SESSION['ACCESS_PASSWORD'] !== ACCESS_PASSWORD) {
-            return false;
-        }
-
-        return true;
+        return ($_SESSION['AUTHENTICATED'] ?? false) === true
+            && isset($_SESSION['ACCESS_USER'])
+            && hash_equals((string) ACCESS_USER, (string) $_SESSION['ACCESS_USER']);
     }
 
     /**
@@ -45,18 +50,18 @@ class Login
      * @param  string $password Password
      * @return boolean
      */
-    private function doLogin($ip, $username, $password)
+    private function doLogin(string $username, string $password): bool
     {
-        // Check the access to this function, using logs and ip
-        //--> to be implemented
-
         // Check credentials
-        if ($username !== ACCESS_USER || $password !== ACCESS_PASSWORD) {
+        if (!hash_equals((string) ACCESS_USER, $username)
+            || !hash_equals((string) ACCESS_PASSWORD, $password)
+        ) {
             return false;
         }
 
+        session_regenerate_id(true);
+        $_SESSION['AUTHENTICATED'] = true;
         $_SESSION['ACCESS_USER'] = $username;
-        $_SESSION['ACCESS_PASSWORD'] = $password;
 
         return true;
     }
@@ -65,50 +70,31 @@ class Login
      * Logout from the password protected area
      * @return boolean Always true
      */
-    private function doLogout()
+    private function doLogout(): bool
     {
-        $_SESSION['ACCESS_USER'] = '';
-        $_SESSION['ACCESS_PASSWORD'] = '';
-
+        $_SESSION = [];
+        session_regenerate_id(true);
         return true;
-    }
-
-    /**
-     * Get the IP address of the visitor
-     * @return string
-     */
-    private function getRealIpAddr()
-    {
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {   //check ip from share internet
-            return $_SERVER['HTTP_CLIENT_IP'];
-        }
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {   //to check ip is pass from proxy
-            return $_SERVER['HTTP_X_FORWARDED_FOR'];
-        }
-
-        return $_SERVER['REMOTE_ADDR'];
     }
 
     /**
      * Render the login page, if the authentication is not performed
      */
-    public function dispatch()
+    public function dispatch(): bool
     {
         // Stop if user is aready logged in (exception from negative first)
         if ($this->isLogged()) {
             return true;
         }
 
-        $ip = $this->getRealIpAddr();
-
-        $username = isset($_POST['username']) ? htmlspecialchars($_POST['username']) : null;
-        $password = isset($_POST['password']) ? htmlspecialchars($_POST['password']) : null;
+        $username = isset($_POST['username']) && is_string($_POST['username']) ? $_POST['username'] : null;
+        $password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : null;
 
         if (isset($_POST['login'])) {
             if (!$username || !$password) {
                 $error = 'Please complete both fields.';
             } else {
-                if (!$this->doLogin($ip, $username, $password)) {
+                if (!$this->doLogin($username, $password)) {
                     $error = "Wrong password.";
                 } else {
                     return true;
@@ -117,8 +103,13 @@ class Login
         }
 
         // Show the login layout and stop
+        $page = [
+            'title' => false,
+            'description' => '',
+            'tags' => [],
+        ];
         $layout = __DIR__ . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'login.php';
-        include($layout);
+        include $layout;
 
         exit;
     }
@@ -127,7 +118,7 @@ class Login
      * Singleton
      * @return Login
      */
-    public static function instance()
+    public static function instance(): self
     {
         static $instance;
         if (!($instance instanceof self)) {

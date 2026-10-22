@@ -3,7 +3,7 @@ if (!defined('APP_STARTED')) {
     die('Forbidden!');
 }
 
-function tree($array, $parent, $parts = array(), $step = 0)
+function tree(array $array, string $parent, array $parts = [], int|false $step = 0): string
 {
     if (!count($array)) {
         return '';
@@ -14,15 +14,24 @@ function tree($array, $parent, $parts = array(), $step = 0)
 
     foreach ($array as $key => $item) {
         if (is_array($item)) {
-            $open = $step !== false && (isset($parts[$step]) && $key == $parts[$step]);
+            $open = $step !== false && isset($parts[$step]) && (string) $key === $parts[$step];
+            $folderUrl = $parent . '/' . rawurlencode((string) $key);
+            $hasChildren = count($item) > 0;
 
             $t .= '<li class="directory'. ($open ? ' open' : '') .'">';
-                $t .= '<a href="#" data-role="directory"><i class="far fa-folder'. ($open ? '-open' : '') .'"></i>&nbsp; ' . $key . '</a>';
-                $t .= tree($item, "$parent/$key", $parts, $open ? $step + 1 : false);
+                $t .= '<div class="directory-row">';
+                    $t .= '<a href="'. e($folderUrl) .'"><i class="far fa-folder'. ($open ? '-open' : '') .'"></i>&nbsp; ' . e((string) $key) . '</a>';
+                    if ($hasChildren) {
+                        $t .= '<button type="button" class="directory-toggle" data-role="directory-toggle" aria-label="'. ($open ? 'Collapse' : 'Expand') .' ' . e((string) $key) .'" aria-expanded="'. ($open ? 'true' : 'false') .'">';
+                        $t .= '<i class="fas fa-chevron-right" aria-hidden="true"></i></button>';
+                    }
+                $t .= '</div>';
+                $t .= tree($item, $parent . '/' . rawurlencode((string) $key), $parts, $open ? $step + 1 : false);
             $t .=  '</li>';
         } else {
-            $selected = (isset($parts[$step]) && $item == $parts[$step]);
-            $t .= '<li class="file'. ($selected ? ' active' : '') .'"><a href="'. $parent .'/'. $item . '">'.$item.'</a></li>';
+            $selected = isset($parts[$step]) && (string) $item === $parts[$step];
+            $fileName = (string) $item;
+            $t .= '<li class="file'. ($selected ? ' active' : '') .'"><a href="'. e($parent . '/' . rawurlencode($fileName)) .'">'. e($fileName) .'</a></li>';
         }
     }
 
@@ -43,66 +52,59 @@ function tree($array, $parent, $parts = array(), $step = 0)
 
 <ul class="unstyled" id="tree-filter-results"></ul>
 
-<?php echo tree($this->_getTree(), BASE_URL, isset($parts) ? $parts : array()); ?>
+<?php echo tree($this->_getTree(), BASE_URL, $parts ?? []); ?>
 
 <script>
     // Case-insensitive alternative to :contains():
     // All credit to Mina Gabriel:
     // http://stackoverflow.com/a/15033857/443373
-    $.expr[':'].containsIgnoreCase = function (n, i, m) {
-        return jQuery(n).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
-    };
+    $.expr[':'].containsIgnoreCase = (node, index, match) =>
+        jQuery(node).text().toUpperCase().includes(match[3].toUpperCase());
 
     //enable / disable buttons
     jQuery.fn.extend({
-      disable: function(state) {
+      disable(state) {
         return this.each(function() {
             this.disabled = state;
         });
       }
     });
 
-    $(document).ready(function() {
-        var iconFolderOpenClass  = 'far fa-folder-open',
-            iconFolderCloseClass = 'far fa-folder',
-
-            // Handle live search/filtering:
-            tree             = $('#tree'),
-            resultsTree      = $('#tree-filter-results')
-            filterInput      = $('#tree-filter-query'),
-            clearFilterInput = $('#tree-filter-clear-query')
-        ;
+    $(function() {
+        const tree = $('#tree');
+        const resultsTree = $('#tree-filter-results');
+        const filterInput = $('#tree-filter-query');
+        const clearFilterInput = $('#tree-filter-clear-query');
 
         // Auto-focus the search field:
         filterInput.focus();
 
         // Cancels a filtering action and puts everything back
         // in its place:
-        function cancelFilterAction()
-        {
-
+        const cancelFilterAction = () => {
             filterInput.val('').removeClass('active');
             resultsTree.empty();
             tree.show();
             clearFilterInput.disable(true);
-        }
+        };
 
         // Clear the filter input when the X to its right is clicked:
-        clearFilterInput.click(cancelFilterAction);
+        clearFilterInput.on('click', cancelFilterAction);
 
 
         // Same thing if the user presses ESC and the filter is active:
-        $(document).keyup(function(e) {
-            e.keyCode == 27 && filterInput.hasClass('active') && cancelFilterAction();
+        $(document).on('keyup', (event) => {
+            if (event.key === 'Escape' && filterInput.hasClass('active')) {
+                cancelFilterAction();
+            }
         });
 
         // Perform live searches as the user types:
         // @todo: check support for 'input' event across more browsers?
-        filterInput.bind('input', function() {
-            var value         = filterInput.val(),
-                query         = $.trim(value),
-                isActive      = value != ''
-            ;
+        filterInput.on('input', function() {
+            const value = filterInput.val() ?? '';
+            let query = value.trim();
+            const isActive = value !== '';
 
             // Add a visual cue to show that the filter function is active:
             filterInput.toggleClass('active', isActive);
@@ -129,29 +131,27 @@ function tree($array, $parent, $parts = array(), $step = 0)
 
             // Get all nodes containing the search query (searches for all a, and returns
             // their parent nodes <li>).
-            resultsTree.html(tree.find('a:containsIgnoreCase(' + query + ')').parent().clone());
+            resultsTree.html(tree.find('a:containsIgnoreCase(' + query + ')').closest('li').clone());
         });
 
         // Handle directory-tree expansion:
-        $(document).on('click', '#sidebar a[data-role="directory"]', function (event) {
+        $(document).on('click', '#sidebar button[data-role="directory-toggle"]', function (event) {
             event.preventDefault();
+            const button = $(this);
+            const folder = button.closest('li.directory');
+            const icon = folder.children('.directory-row').find('.far').first();
+            const subtree = folder.children('ul').first();
+            const open = !folder.hasClass('open');
 
-            var icon = $(this).children('.far');
-            var open = icon.hasClass(iconFolderOpenClass);
-            var subtree = $(this).siblings('ul')[0];
-
-            icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+            folder.toggleClass('open', open);
+            button.attr('aria-expanded', open ? 'true' : 'false');
+            button.attr('aria-label', (open ? 'Collapse ' : 'Expand ') + folder.children('.directory-row').children('a').text().trim());
+            icon.toggleClass('fa-folder', !open).toggleClass('fa-folder-open', open);
 
             if (open) {
-                if (typeof subtree != 'undefined') {
-                    $(subtree).slideUp({ duration: 100 });
-                }
-                icon.addClass(iconFolderCloseClass);
+                subtree.slideDown({ duration: 100 });
             } else {
-                if (typeof subtree != 'undefined') {
-                    $(subtree).slideDown({ duration: 100 });
-                }
-                icon.addClass(iconFolderOpenClass);
+                subtree.slideUp({ duration: 100 });
             }
         });
     });

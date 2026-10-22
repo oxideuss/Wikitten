@@ -165,8 +165,8 @@ class MarkdownExtra extends \Michelf\MarkdownExtra
         }
 
         $url = self::fixUri($url);
-        $element = preg_replace('/href=".*"/', "href=\"${url}\"", $element);
-        $element = preg_replace('/src=".*"/', "src=\"${url}\"", $element);
+        $element = preg_replace('/href=".*"/', "href=\"{$url}\"", $element);
+        $element = preg_replace('/src=".*"/', "src=\"{$url}\"", $element);
 
         return $element;
     }

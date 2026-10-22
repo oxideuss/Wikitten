@@ -1,7 +1,5 @@
-version: "3.7"
 services:
     wikitten:
-        pid: wikitten
         container_name: wikitten
         image: wikitten
         build:
